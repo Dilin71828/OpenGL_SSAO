@@ -35,10 +35,6 @@ float lastX = (float)SCREEN_WIDTH / 2.0f;
 float lastY = (float)SCREEN_HEIGHT / 2.0f;
 bool firstMouse = true;
 
-// render setting
-const int DEPTH_MAP_WIDTH = 1024;
-const int DEPTH_MAP_HEIGHT = 1024;
-
 // light setting
 glm::vec3 lightPosition = glm::vec3(8.0f, 4.0f, 5.0f);
 glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -76,6 +72,12 @@ int main()
     }
 
     glEnable(GL_DEPTH_TEST);
+
+    Shader gbufferShader("gbuffer.vert", "gbuffer.frag");
+
+    unsigned int gbufferFBO;
+    unsigned int depthMap, normalMap, viewPosMap, albedoMap;
+    glGenFramebuffers(1, &gbufferFBO);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -143,3 +145,6 @@ void processInput(GLFWwindow *window)
         mainCamera.ProcessKeyboard(RIGHT, deltaTime);
     }
 }
+
+void renderScene(Shader& shader)
+{}
