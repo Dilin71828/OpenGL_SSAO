@@ -17,8 +17,11 @@ message(STATUS "GLM included at ${GLM_INCLUDE_DIR}")
 find_package(GLFW3 REQUIRED)
 message(STATUS "Found GLFW3 in ${GLFW3_INCLUDE_DIR}")
 
+find_package(ASSIMP REQUIRED)
+message(STATUS "Found ASSIMP in ${ASSIMP_INCLUDE_DIR}")
+
 if (WIN32)
-    set(LIBS glfw3 opengl32)
+    set(LIBS glfw3 opengl32 assimp)
 elseif(APPLE)
     INCLUDE_DIRECTORIES(/System/Library/Frameworks)
     FIND_LIBRARY(COCOA_LIBRARY Cocoa)
@@ -27,7 +30,7 @@ elseif(APPLE)
     FIND_LIBRARY(CoreVideo_LIBRARY CoreVideo)
     MARK_AS_ADVANCED(COCOA_LIBRARY OpenGL_LIBRARY)
     set(APPLE_LIBS ${COCOA_LIBRARY} ${IOKit_LIBRARY} ${OpenGL_LIBRARY} ${CoreVideo_LIBRARY})
-    set(APPLE_LIBS ${APPLE_LIBS} ${GLFW3_LIBRARY})
+    set(APPLE_LIBS ${APPLE_LIBS} ${GLFW3_LIBRARY} ${ASSIMP_LIBRARY})
     set(LIBS ${LIBS} ${APPLE_LIBS})
 endif (WIN32)
 
@@ -57,3 +60,13 @@ foreach(SHADER ${SHADERS})
         file(COPY ${SHADER} DESTINATION ${CMAKE_SOURCE_DIR}/build)
     endif (WIN32)
 endforeach(SHADER)
+
+file(GLOB DLLS
+    "dlls/*.dll"
+)
+
+if (WIN32)
+    foreach(DLL ${DLLS})
+        file(COPY ${DLL} DESTINATION ${CMAKE_SOURCE_DIR}/bin/Debug)
+    endforeach(DLL)
+endif(WIN32)
