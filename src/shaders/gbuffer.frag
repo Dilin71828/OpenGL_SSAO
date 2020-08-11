@@ -7,11 +7,11 @@ in vec3 viewSpacePosition;
 in vec2 texCoords;
 in vec3 viewSpaceNormal;
 
-uniform sampler2D mainTexture;
+uniform vec3 color;
 
 void main()
 {
     viewPos = viewSpacePosition;
     viewNormal = viewSpaceNormal;
-    albedo = texture(mainTexture, texCoords).rgb;
+    albedo = color;
 }
