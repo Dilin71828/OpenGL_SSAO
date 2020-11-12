@@ -7,6 +7,8 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <random>
+#include <ctime>
 
 #include <myOpenGL/camera.h>
 #include <myOpenGL/shader.h>
@@ -18,6 +20,10 @@ void scroll_callback(GLFWwindow *window, double xOffset, double yOffset);
 void processInput(GLFWwindow *window);
 void renderScene(Shader &shader);
 void renderQuad();
+GLuint createRandomTexture(int size);
+
+const float PI = 3.141593;
+const int MAX_SAMPLE = 64;
 
 // basic window setting
 const int SCREEN_WIDTH = 1280;
@@ -132,6 +138,8 @@ int main()
     };
     glDrawBuffers(3, gbufferDrawBuffers);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    unsigned int randomMap = createRandomTexture(MAX_SAMPLE);
 
     debugShader.use();
     debugShader.setInt("debugTexture", 0);
@@ -259,4 +267,29 @@ void renderQuad()
     glBindVertexArray(quadVAO);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindVertexArray(0);
+}
+
+GLuint createRandomTexture(int size) {
+	std::default_random_engine eng;
+	std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+	eng.seed(std::time(0));
+	glm::vec3* randomData = new glm::vec3[size];
+	for (int i = 0; i < size; ++i) {
+		float phi = dist(eng) * 2 * PI;
+        float theta = dist(eng) * 0.5 * PI;
+        float rho = dist(eng);
+        randomData[i].x = rho * sin(theta) * sin(phi);
+        randomData[i].y = rho * sin(theta) * cos(phi);
+        randomData[i].z = rho * cos(theta);
+	}
+	GLuint randomTexture;
+	glGenTextures(1, &randomTexture);
+	glBindTexture(GL_TEXTURE_2D, randomTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, size, 1, 0, GL_RGB, GL_FLOAT, randomData);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	delete[] randomData;
+	return randomTexture;
 }
