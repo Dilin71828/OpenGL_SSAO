@@ -13,9 +13,9 @@ uniform mat4 projection;
 
 void main()
 {
-    viewPosition = view * model * vec4(aPos, 1.0);
+    vec4 viewPosition = view * model * vec4(aPos, 1.0);
     viewSpacePosition = vec3(viewPosition);
-    TexCoords = aTexCoords;
-    viewSpaceNormal = mat3(transpose(inverse(view * model)))*normal;
+    texCoords = aTexCoords;
+    viewSpaceNormal = mat3(transpose(inverse(view * model)))*aNormal;
     gl_Position = projection * viewPosition;
 }

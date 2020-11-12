@@ -14,5 +14,6 @@ void main()
 {
     viewPos = viewSpacePosition;
     viewNormal = viewSpaceNormal;
-    albedo = texture(texture_diffuse1, texCoords);
+    //albedo = texture(texture_diffuse1, texCoords).rgb;
+    albedo = color;
 }

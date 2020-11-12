@@ -147,20 +147,25 @@ int main()
 
         glm::mat4 view = mainCamera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(mainCamera.Zoom), (float)SCREEN_WIDTH/(float)SCREEN_HEIGHT, nearPlane, farPlane);
+        glm::mat4 model = glm::mat4(1);
+        model = glm::scale(model, glm::vec3(0.2));
+        model = glm::translate(model, glm::vec3(0, 0, -3));
 
         glBindFramebuffer(GL_FRAMEBUFFER, gbufferFBO);
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
         gbufferShader.use();
         gbufferShader.setMat4("view", view);
         gbufferShader.setMat4("projection", projection);
+        gbufferShader.setMat4("model", model);
+        gbufferShader.setVec3("color", glm::vec3(0.8, 0.8, 0.8));
         renderScene(gbufferShader);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClearColor(0.1f, 0.1f, 0.1f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         debugShader.use();
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, normalMap);
+        glBindTexture(GL_TEXTURE_2D, albedoMap);
         renderQuad();
 
 
@@ -223,8 +228,9 @@ Model *mainModel = nullptr;
 void renderScene(Shader &shader)
 {
     if (mainModel==nullptr){
-        mainModel = new Model("../../resource/");
+        mainModel = new Model("../../resource/Models/teapot.fbx");
     }
+    mainModel->Draw(shader);
 }
 
 unsigned int quadVAO = 0;
