@@ -139,7 +139,7 @@ int main()
     glDrawBuffers(3, gbufferDrawBuffers);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    unsigned int randomMap = createRandomTexture(MAX_SAMPLE);
+    unsigned int sampleKernelMap = createRandomTexture(MAX_SAMPLE);
 
     debugShader.use();
     debugShader.setInt("debugTexture", 0);
