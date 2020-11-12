@@ -74,6 +74,7 @@ int main()
     glEnable(GL_DEPTH_TEST);
 
     Shader gbufferShader("gbuffer.vert", "gbuffer.frag");
+    Shader debugShader("screenQuad.vert", "debugShader.frag");
 
     unsigned int gbufferFBO;
     unsigned int depthMap, normalMap, viewPosMap, albedoMap;
@@ -132,6 +133,9 @@ int main()
     glDrawBuffers(3, gbufferDrawBuffers);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    debugShader.use();
+    debugShader.setInt("debugTexture", 0);
+
     while (!glfwWindowShouldClose(window))
     {
         // calculate the passed time from last frame
@@ -154,6 +158,10 @@ int main()
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        debugShader.use();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, normalMap);
+        renderQuad();
 
 
         glfwSwapBuffers(window);
@@ -211,8 +219,12 @@ void processInput(GLFWwindow *window)
     }
 }
 
+Model *mainModel = nullptr;
 void renderScene(Shader &shader)
 {
+    if (mainModel==nullptr){
+        mainModel = new Model("../../resource/");
+    }
 }
 
 unsigned int quadVAO = 0;

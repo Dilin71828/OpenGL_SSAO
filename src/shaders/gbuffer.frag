@@ -8,10 +8,11 @@ in vec2 texCoords;
 in vec3 viewSpaceNormal;
 
 uniform vec3 color;
+uniform sampler2D texture_diffuse1;
 
 void main()
 {
     viewPos = viewSpacePosition;
     viewNormal = viewSpaceNormal;
-    albedo = color;
+    albedo = texture(texture_diffuse1, texCoords);
 }
