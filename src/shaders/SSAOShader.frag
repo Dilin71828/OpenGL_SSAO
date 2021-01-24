@@ -13,25 +13,25 @@ uniform float noiseScale;
 uniform float radius;
 uniform mat4 projection;
 
-#define MAX_SAMPLE 64
+#define MAX_SAMPLE 8
 
 void main()
 {
     vec3 viewSpacePos = texture(viewPosMap, TexCoords).xyz;
-    vec3 normal = texture(normalMap, TexCoords).xyz;
+    vec3 normal = texture(normalMap, TexCoords).xyz;     // view space normal
     vec3 noise = texture(noiseMap, TexCoords * noiseScale).xyz;
 
     vec3 tangent = normalize(noise - normal * dot(normal, noise));
-    vec3 bitangent = cross(normal, tangent);
-    mat3 TBN = mat3(tangent, bitangent, normal);
+    vec3 bitangent = cross(tangent, normal);
+    mat3 TBN = transpose(mat3(tangent, bitangent, normal));
 
-    vec3 samplePos = 0;
+    vec3 samplePos = vec3(0, 0, 0);
     float occlusion = 0;
 
     for (int i=0; i<MAX_SAMPLE; i++)
     {
-        vec3 offsetTangentSpace = texelFetch(sampleKernelMap, ivec2(i, 0), 0);
-        vec3 offsetViewSpace = mul(TBN, offsetTangentSpace) * radius;
+        vec3 offsetTangentSpace = texelFetch(sampleKernelMap, ivec2(i, 0), 0).xyz;
+        vec3 offsetViewSpace = (TBN * offsetTangentSpace) * radius;
 
         samplePos = viewSpacePos + offsetViewSpace;
 
@@ -44,6 +44,6 @@ void main()
         occlusion += step(samplePos.z, targetDepth);
     }
 
-    occlusion/=MAX_SAMPLE;
+    occlusion=occlusion/MAX_SAMPLE;
     FragColor = occlusion;
 }

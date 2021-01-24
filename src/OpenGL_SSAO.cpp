@@ -21,6 +21,7 @@ void processInput(GLFWwindow *window);
 void renderScene(Shader &shader);
 void renderQuad();
 GLuint createRandomTexture(int size);
+GLuint createNoiseTexture(int size);
 
 const float PI = 3.141593;
 const int MAX_SAMPLE = 64;
@@ -46,6 +47,10 @@ glm::vec3 lightPosition = glm::vec3(8.0f, 4.0f, 5.0f);
 glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
 float lightNearPlane = 0.1f;
 float lightFarPlane = 20.0f;
+
+// SSAO setting
+float noiseScale = 1.0f;
+float radius = 0.01f;
 
 int main()
 {
@@ -80,6 +85,7 @@ int main()
     glEnable(GL_DEPTH_TEST);
 
     Shader gbufferShader("gbuffer.vert", "gbuffer.frag");
+    Shader ssaoShader("screenQuad.vert", "SSAOShader.frag");
     Shader debugShader("screenQuad.vert", "debugShader.frag");
 
     unsigned int gbufferFBO;
@@ -139,10 +145,37 @@ int main()
     glDrawBuffers(3, gbufferDrawBuffers);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    unsigned int ssaoFBO;
+    unsigned int ssaoMap;
+    glGenFramebuffers(1, &ssaoFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+    glGenTextures(1, &ssaoMap);
+    glBindTexture(GL_TEXTURE_2D, ssaoMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, SCREEN_WIDTH, SCREEN_HEIGHT, 0, GL_RED, GL_FLOAT, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_Color);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoMap, 0);
+    glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
     unsigned int sampleKernelMap = createRandomTexture(MAX_SAMPLE);
+    unsigned int noiseMap = createNoiseTexture(128);
 
     debugShader.use();
     debugShader.setInt("debugTexture", 0);
+
+    ssaoShader.use();
+    ssaoShader.setInt("depthMap", 0);
+    ssaoShader.setInt("normalMap", 1);
+    ssaoShader.setInt("viewPosMap", 2);
+    ssaoShader.setInt("sampleKernelMap", 3);
+    ssaoShader.setInt("noiseMap", 4);
+    ssaoShader.setFloat("noiseScale", noiseScale);
+    ssaoShader.setFloat("radius", radius);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -168,12 +201,28 @@ int main()
         gbufferShader.setVec3("color", glm::vec3(0.8, 0.8, 0.8));
         renderScene(gbufferShader);
 
+        glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+        glClear(GL_COLOR_BUFFER_BIT);
+        ssaoShader.use();
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, normalMap);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, viewPosMap);
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, sampleKernelMap);
+        glActiveTexture(GL_TEXTURE4);
+        glBindTexture(GL_TEXTURE_2D, noiseMap);
+        ssaoShader.setMat4("projection", projection);
+        renderQuad();
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glClearColor(0.1f, 0.1f, 0.1f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         debugShader.use();
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, albedoMap);
+        glBindTexture(GL_TEXTURE_2D, viewPosMap);
         renderQuad();
 
 
@@ -292,4 +341,27 @@ GLuint createRandomTexture(int size) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	delete[] randomData;
 	return randomTexture;
+}
+
+GLuint createNoiseTexture(int size)
+{
+    std::default_random_engine eng;
+    std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+    eng.seed(std::time(0));
+    float* randomData = new float[size * size];
+    for(int i=0; i<size * size; ++i)
+    {
+        randomData[i] = dist(eng);
+    }
+
+    GLuint randomTexture;
+    glGenTextures(1, &randomTexture);
+    glBindTexture(GL_TEXTURE_2D, randomTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, size, size, 0, GL_RED, GL_FLOAT, randomData);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    delete[] randomData;
+    return randomTexture;
 }
