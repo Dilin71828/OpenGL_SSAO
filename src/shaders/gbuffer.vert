@@ -17,5 +17,6 @@ void main()
     viewSpacePosition = vec3(viewPosition);
     texCoords = aTexCoords;
     viewSpaceNormal = mat3(transpose(inverse(view * model)))*aNormal;
+    //viewSpaceNormal = normalize(mat3(transpose(inverse(model)))*aNormal);
     gl_Position = projection * viewPosition;
 }

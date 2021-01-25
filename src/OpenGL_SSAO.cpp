@@ -50,12 +50,12 @@ float lightFarPlane = 20.0f;
 
 // SSAO setting
 float noiseScale = 1.0f;
-float radius = 0.01f;
+float radius = 0.1f;
 
 int main()
 {
     glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -163,7 +163,7 @@ int main()
 
 
     unsigned int sampleKernelMap = createRandomTexture(MAX_SAMPLE);
-    unsigned int noiseMap = createNoiseTexture(128);
+    unsigned int noiseMap = createNoiseTexture(1024);
 
     debugShader.use();
     debugShader.setInt("debugTexture", 0);
@@ -222,7 +222,7 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         debugShader.use();
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, viewPosMap);
+        glBindTexture(GL_TEXTURE_2D, ssaoMap);
         renderQuad();
 
 
@@ -326,7 +326,7 @@ GLuint createRandomTexture(int size) {
 	for (int i = 0; i < size; ++i) {
 		float phi = dist(eng) * 2 * PI;
         float theta = dist(eng) * 0.5 * PI;
-        float rho = dist(eng);
+        float rho = dist(eng) + 0.1;
         randomData[i].x = rho * sin(theta) * sin(phi);
         randomData[i].y = rho * sin(theta) * cos(phi);
         randomData[i].z = rho * cos(theta);
@@ -348,16 +348,18 @@ GLuint createNoiseTexture(int size)
     std::default_random_engine eng;
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
     eng.seed(std::time(0));
-    float* randomData = new float[size * size];
+    glm::vec3* randomData = new glm::vec3[size * size];
     for(int i=0; i<size * size; ++i)
     {
-        randomData[i] = dist(eng);
+        randomData[i].x = dist(eng);
+        randomData[i].y = dist(eng);
+        randomData[i].z = dist(eng);
     }
 
     GLuint randomTexture;
     glGenTextures(1, &randomTexture);
     glBindTexture(GL_TEXTURE_2D, randomTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, size, size, 0, GL_RED, GL_FLOAT, randomData);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, size, size, 0, GL_RGB, GL_FLOAT, randomData);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);

@@ -13,7 +13,7 @@ uniform sampler2D texture_diffuse1;
 void main()
 {
     viewPos = viewSpacePosition;
-    viewNormal = viewSpaceNormal;
+    viewNormal = normalize(viewSpaceNormal);
     //albedo = texture(texture_diffuse1, texCoords).rgb;
     albedo = color;
 }

@@ -22,7 +22,7 @@ void main()
     vec3 noise = texture(noiseMap, TexCoords * noiseScale).xyz;
 
     vec3 tangent = normalize(noise - normal * dot(normal, noise));
-    vec3 bitangent = cross(tangent, normal);
+    vec3 bitangent = cross(normal, tangent);
     mat3 TBN = transpose(mat3(tangent, bitangent, normal));
 
     vec3 samplePos = vec3(0, 0, 0);
@@ -37,13 +37,15 @@ void main()
 
         vec4 targetPos = vec4(samplePos, 1.0);
         targetPos = projection * targetPos;
-        targetPos.xyz/=targetPos.w;
+        targetPos.xyz = targetPos.xyz/targetPos.w;
         targetPos.xyz = targetPos.xyz * 0.5 + 0.5;
 
-        float targetDepth = texture(viewPosMap, targetPos.xy).z;
-        occlusion += step(samplePos.z, targetDepth);
+        float sampleDepth = texture(viewPosMap, targetPos.xy).z;
+
+        float rangeCheck = smoothstep(0.0, 1.0, radius/abs(viewSpacePos.z - sampleDepth));
+        occlusion += (sampleDepth >= samplePos.z + 0.01 ? 1.0 : 0.0) * rangeCheck;
     }
 
-    occlusion=occlusion/MAX_SAMPLE;
+    occlusion=1-occlusion/MAX_SAMPLE;
     FragColor = occlusion;
 }
